@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Components/InputComponent.h"
 #include "DrawDebugHelpers.h"
+#include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "Grabber.generated.h"
 
 
@@ -28,4 +30,21 @@ public:
 private:
 	// How far ahead to reach distance
 	float reach = 100.f;
+
+	UPhysicsHandleComponent* physicsHandle = nullptr;
+
+	UInputComponent* inputComponent = nullptr;
+
+	// The action to grab
+	void Grab();
+
+	void Release();
+
+
+	void FindPhysicsHandleComponent();
+
+	void SetupInputComponent();
+
+	// Return hit for first physics body in reach
+	const FHitResult GetFirstPhysicsBodyInReach();
 };
