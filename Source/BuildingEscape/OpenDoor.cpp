@@ -18,21 +18,29 @@ void UOpenDoor::BeginPlay()
 	Super::BeginPlay();
 
 	owner = GetOwner();
-	actorThatOpens = GetWorld()->GetFirstPlayerController()->GetPawn();
+
+	if (!pressurePlate)
+	{
+		UE_LOG(LogTemp, Log, TEXT("%s missing pressure plate"), *owner->GetName());
+	}
 }
 
 void UOpenDoor::OpenDoor()
 {
-	FRotator newRotation = FRotator(owner->GetActorRotation().Pitch, openAngle, owner->GetActorRotation().Roll);
+	/*FRotator newRotation = FRotator(owner->GetActorRotation().Pitch, openAngle, owner->GetActorRotation().Roll);
 
-	owner->SetActorRotation(newRotation);
+	owner->SetActorRotation(newRotation);*/
+	
+	onOpenRequest.Broadcast();
 }
 
 void UOpenDoor::CloseDoor()
 {
-	FRotator newRotation = FRotator(owner->GetActorRotation().Pitch, -90.f, owner->GetActorRotation().Roll);
+	/*FRotator newRotation = FRotator(owner->GetActorRotation().Pitch, -90.f, owner->GetActorRotation().Roll);
 
-	owner->SetActorRotation(newRotation);
+	owner->SetActorRotation(newRotation);*/
+
+	onCloseRequest.Broadcast();
 }
 
 // Called every frame
@@ -40,7 +48,7 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (pressurePlate && pressurePlate->IsOverlappingActor(actorThatOpens))
+	if (GetTotalMassOfActorsOnPlate() > triggerMass)
 	{
 		OpenDoor();
 		lastDoorOpenTime = GetWorld()->GetTimeSeconds();
@@ -50,5 +58,25 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 	{
 		CloseDoor();
 	}
+}
+
+const float UOpenDoor::GetTotalMassOfActorsOnPlate() const
+{
+	float totalMass = 0.f;
+	TArray<AActor*> overlappingActors;
+
+	if (!pressurePlate) { 
+		return totalMass;
+	}
+	pressurePlate->GetOverlappingActors(overlappingActors);
+
+	UE_LOG(LogTemp, Warning, TEXT("Num of overlappedactors %d"), overlappingActors.Num());
+
+	for (const auto* actor : overlappingActors)
+	{
+		totalMass += actor->FindComponentByClass<UPrimitiveComponent>()->GetMass();
+		UE_LOG(LogTemp, Log, TEXT("Overlapped actor %s"), *actor->GetName());
+	}
+	return totalMass;
 }
 
